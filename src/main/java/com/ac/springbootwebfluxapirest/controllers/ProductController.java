@@ -112,4 +112,26 @@ public class ProductController {
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/updateimgv2")
+    public Mono<ResponseEntity<Product>> uploadImgAndCreateProduct(Product product, @RequestPart FilePart file) {
+
+        if (product.getCreateAt() == null) {
+            product.setCreateAt(new Date());
+        }
+
+        product.setPicture(UUID.randomUUID().toString() + "-" + file.filename()
+                .replace(" ", "")
+                .replace(":", "")
+                .replace("\\", "")
+        );
+
+        return file.transferTo(new File(pathImg + product.getPicture()))
+                .then(service.save(product))
+                .map(p -> ResponseEntity
+                        .created(URI.create("/api/product/".concat(p.getId())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(p)
+                );
+    }
+
 }
