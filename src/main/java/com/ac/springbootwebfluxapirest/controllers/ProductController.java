@@ -2,21 +2,28 @@ package com.ac.springbootwebfluxapirest.controllers;
 
 import com.ac.springbootwebfluxapirest.documents.Product;
 import com.ac.springbootwebfluxapirest.services.ProductService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
 import java.net.URI;
 import java.util.Date;
+import java.util.UUID;
 
 @RestController
 @RequestMapping({"/api/product", "/"})
 public class ProductController {
 
     private final ProductService service;
+
+    @Value("${config.upload.path}")
+    private String pathImg;
 
     public ProductController(ProductService service) {
         this.service = service;
@@ -87,5 +94,22 @@ public class ProductController {
                 .defaultIfEmpty(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
     }
 
+    @PostMapping("/upload/{id}")
+    public Mono<ResponseEntity<Product>> uploadImg(@PathVariable String id, @RequestPart FilePart file) {
+        return service.findBiId(id)
+                .flatMap(p -> {
+                    p.setPicture(
+                            UUID.randomUUID().toString() + "-" + file.filename()
+                                    .replace(" ", "")
+                                    .replace(":", "")
+                                    .replace("\\", ""));
+                    return file.transferTo(new File(pathImg + p.getPicture()))
+                            .then(
+                                    service.save(p)
+                            );
+                })
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
 
 }
