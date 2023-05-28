@@ -2,18 +2,22 @@ package com.ac.springbootwebfluxapirest.controllers;
 
 import com.ac.springbootwebfluxapirest.documents.Product;
 import com.ac.springbootwebfluxapirest.services.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.net.URI;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -52,17 +56,39 @@ public class ProductController {
     }
 
     @PostMapping
-    public Mono<ResponseEntity<Product>> create(@RequestBody Product product) {
-        if (product.getCreateAt() == null) {
-            product.setCreateAt(new Date());
-        }
+    public Mono<ResponseEntity<Map<String , Object>>> create(@Valid @RequestBody Mono<Product> monoProduct) {
 
-        return service.save(product)
-                .map(p -> ResponseEntity
-                        .created(URI.create("/api/product/".concat(p.getId()))) // muestra en el header
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(p)
-                );
+        Map<String, Object> response = new HashMap<String, Object>();
+
+        return monoProduct.flatMap(product -> {
+            if (product.getCreateAt() == null ) {
+                product.setCreateAt(new Date());
+            }
+
+            return service.save(product)
+                    .map(p -> {
+                        response.put("product", p);
+                        response.put("menssage", "Producto success");
+                        response.put("timestamp", new Date());
+                        return ResponseEntity
+                                .created(URI.create("/api/prodcut/".concat(p.getId())))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .body(response);
+                    });
+        }).onErrorResume(t -> {
+           return Mono.just(t)
+                   .cast(WebExchangeBindException.class)
+                   .flatMap(e -> Mono.just(e.getFieldErrors()))
+                   .flatMapMany(Flux::fromIterable)
+                   .map(fieldError -> "The field " + fieldError.getField() + " " + fieldError.getDefaultMessage())
+                   .collectList()// convert flux to list mono string
+                   .flatMap(list -> {
+                       response.put("erros", list);
+                       response.put("timestamp", new Date());
+                       response.put("status", HttpStatus.BAD_REQUEST.value());
+                       return Mono.just(ResponseEntity.badRequest().body(response));
+                   });
+        });
     }
 
     @PutMapping("/{id}")
