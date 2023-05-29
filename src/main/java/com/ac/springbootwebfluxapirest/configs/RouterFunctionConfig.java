@@ -19,7 +19,9 @@ public class RouterFunctionConfig {
                 .andRoute(GET("/api/v2/products/{id}"), productHandler::productById)
                 .andRoute(POST("/api/v2/products"), productHandler::save)
                 .andRoute(PUT("/api/v2/products/{id}"), productHandler::update)
-                .andRoute(DELETE("/api/v2/products/{id}"), productHandler::delete);
+                .andRoute(DELETE("/api/v2/products/{id}"), productHandler::delete)
+                .andRoute(POST("/api/v2/updateimg/{id}"), productHandler::uploadImg)
+                .andRoute(POST("/api/v2/products/createandimg"), productHandler::createProductAndUpdateImg);
 //        se usa esto para solicitar las peticiones con header
 //                .andRoute(GET("/api/v2/products/{id}").and(contentType(MediaType.APPLICATION_JSON)), productHandler::productById);
     }
