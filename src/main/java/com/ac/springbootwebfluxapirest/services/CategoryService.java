@@ -10,4 +10,5 @@ public interface CategoryService {
     public Mono<Category> findBiId(String id);
     public Mono<Category> save(Category category);
     public Mono<Void> delete(Category category);
+    public Mono<Category> findByName(String name);
 }

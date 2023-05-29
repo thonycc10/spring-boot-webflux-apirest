@@ -34,4 +34,9 @@ public class CategoryServiceImpl implements CategoryService{
     public Mono<Void> delete(Category category) {
         return dao.delete(category);
     }
+
+    @Override
+    public Mono<Category> findByName(String name) {
+        return dao.findByName(name);
+    }
 }

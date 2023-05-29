@@ -47,4 +47,9 @@ public class ProductServiceImpl implements ProductService {
     public Mono<Void> delete(Product product) {
         return dao.delete(product);
     }
+
+    @Override
+    public Mono<Product> findByName(String name) {
+        return dao.getByName(name);
+    }
 }
