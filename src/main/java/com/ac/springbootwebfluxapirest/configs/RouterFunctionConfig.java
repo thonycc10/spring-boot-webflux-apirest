@@ -16,7 +16,10 @@ public class RouterFunctionConfig {
     @Bean
     public RouterFunction<ServerResponse> routes(ProductHandler productHandler) {
         return route(GET("/api/v2/products").or(GET("/api/v3/products")), productHandler::list)
-                .andRoute(GET("/api/v2/products/{id}"), productHandler::productById);
+                .andRoute(GET("/api/v2/products/{id}"), productHandler::productById)
+                .andRoute(POST("/api/v2/products"), productHandler::save)
+                .andRoute(PUT("/api/v2/products/{id}"), productHandler::update)
+                .andRoute(DELETE("/api/v2/products/{id}"), productHandler::delete);
 //        se usa esto para solicitar las peticiones con header
 //                .andRoute(GET("/api/v2/products/{id}").and(contentType(MediaType.APPLICATION_JSON)), productHandler::productById);
     }
